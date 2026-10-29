@@ -80,9 +80,10 @@ var byId=function(id){return db.items.filter(function(x){return x.id==id})[0]};
 var clone=function(o){return JSON.parse(JSON.stringify(o))};
 function seed(){return{next:2,cfg:{name:'AVS Instalação e Manutenção',phone:''},items:[{id:1,num:1,date:today(),client:'Condomínio Residencial Portinari',addr:'Rua dos Mosaicos, nº 132',cnpj:'66.985.892/0001-73',items:[{d:'Serviço em caixas de passagem elétrica e de dados: limpeza, furação e dreno, com colocação de pedra brita II em todas as caixas.',q:1,p:2400}],entry:50,notes:'',status:'Pendente'}]}}
 function load(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.items){d.cfg=d.cfg||{name:'AVS Instalação e Manutenção',phone:''};return d}}}catch(e){}return seed()}
-function save(){if(window.cloudSave)cloudSave()}
+function save(){try{localStorage.setItem('avs_mirror',JSON.stringify(db))}catch(e){}if(window.cloudSave)cloudSave()}
 var sync='☁ Firebase',user=null,ready=false,loginErr='';
 db={next:1,cfg:{name:'AVS Instalação e Manutenção',phone:''},items:[]};
+try{var mm=JSON.parse(localStorage.getItem('avs_mirror'));if(mm&&Array.isArray(mm.items)){db=mm;db.cfg=db.cfg||{name:'AVS Instalação e Manutenção',phone:''};db.next=db.next||1;ready=true}}catch(e){}
 function T(t){tab=t;view='tab';cid=null;render();scrollTo(0,0)}
 function V(v,o){view=v;cur=o||null;cid=null;render();scrollTo(0,0)}
 function blank(){return{id:Date.now(),num:db.next,date:today(),client:'',addr:'',cnpj:'',items:[{d:'',q:1,p:0}],entry:50,notes:'',status:'Pendente',isNew:true}}
@@ -93,7 +94,7 @@ function render(){
  if(!ready){a.innerHTML='<p class="m" style="padding:40px;text-align:center">Carregando…</p>';n.style.display='none';return}
  if(view=='tab'){
   var t={dash:['Painel','Visão geral dos orçamentos'],list:['Orçamentos','Gerencie suas propostas'],cfg:['Ajustes','Empresa e backup']}[tab];
-  h='<header class="lg"><img src="'+LOGO+'" alt="AVS Instalação e Manutenção"><b>'+t[0]+'</b><div>'+t[1]+' · '+sync+'</div></header>'+(tab=='dash'?vDash():tab=='list'?vList():vCfg());
+  h='<header class="lg"><img src="'+LOGO+'" alt="AVS Instalação e Manutenção"><b>'+t[0]+'</b><div>'+t[1]+' · <span id="sy">'+esc(sync)+'</span></div></header>'+(tab=='dash'?vDash():tab=='list'?vList():vCfg());
   n.style.display='flex';
   n.innerHTML=[['dash','Painel'],['list','Orçamentos']].map(function(x){return'<button class="'+(tab==x[0]?'on':'')+'" onclick="T(\''+x[0]+'\')">'+ic(x[0])+x[1]+'</button>'}).join('')+
    '<button class="fab" onclick="V(\'edit\',blank())" aria-label="Novo">'+ic('add')+'</button><button class="'+(tab=='cfg'?'on':'')+'" onclick="T(\'cfg\')">'+ic('cfg')+'Ajustes</button>';
@@ -175,36 +176,59 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {initializeFirestore,memoryLocalCache,collection,doc,setDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app=initializeApp({apiKey:"AIzaSyDSzOL_vV6XUtN0xjYbEQXRcz1Ox0SrDso",authDomain:"orcamentos-e1102.firebaseapp.com",projectId:"orcamentos-e1102",storageBucket:"orcamentos-e1102.firebasestorage.app",messagingSenderId:"677039016434",appId:"1:677039016434:web:707a19d5c6d5d8872fc36b"});
 const fs=initializeFirestore(app,{experimentalForceLongPolling:true,localCache:memoryLocalCache()});
-let synced={},metaSynced='',timer=null,first=true;
-const err=e=>{var c=e&&e.code;window.sync=c=='permission-denied'?'sem permissão: publique as regras':c=='unavailable'?'sem conexão com o Firebase':'erro: '+(c||'desconhecido');if(view=='tab'&&tab!='cfg')render()};
-function flush(){
+const PK='avs_pending';
+let pend={up:{},del:[],meta:null};
+try{const x=JSON.parse(localStorage.getItem(PK));if(x&&x.up)pend=x}catch(e){}
+const persist=()=>{try{localStorage.setItem(PK,JSON.stringify(pend))}catch(e){}};
+const mirror=()=>{try{localStorage.setItem('avs_mirror',JSON.stringify(db))}catch(e){}};
+let synced={},metaSynced=JSON.stringify({cfg:db.cfg,next:db.next}),timer=null,first=true,base='☁ conectando…',inflight={},pinging=false;
+db.items.forEach(o=>{synced[String(o.id)]=JSON.stringify(o)});
+const cnt=()=>Object.keys(pend.up).length+pend.del.length+(pend.meta?1:0);
+function paint(){const t=base+(cnt()?' · '+cnt()+' pendente(s) neste aparelho':'');window.sync=t;
+ const e=document.getElementById('st');if(e)e.textContent='Status: '+t;const y=document.getElementById('sy');if(y)y.textContent=t}
+function setSync(t){base=t;paint()}
+const err=e=>{const c=e&&e.code;setSync(c=='permission-denied'?'sem permissão: publique as regras':'☁ erro: '+(c||'desconhecido'))};
+function diff(){
  const ids=new Set();
- db.items.forEach(o=>{const id=String(o.id);ids.add(id);const j=JSON.stringify(o);if(synced[id]!==j){synced[id]=j;setDoc(doc(fs,'orcamentos',id),JSON.parse(j)).catch(err)}});
- Object.keys(synced).forEach(id=>{if(!ids.has(id)){delete synced[id];deleteDoc(doc(fs,'orcamentos',id)).catch(err)}});
- const m=JSON.stringify({cfg:db.cfg,next:db.next});
- if(m!==metaSynced){metaSynced=m;setDoc(doc(fs,'meta','config'),JSON.parse(m)).catch(err)}
+ db.items.forEach(o=>{const id=String(o.id);ids.add(id);const j=JSON.stringify(o);if(synced[id]!==j){synced[id]=j;pend.up[id]=j;pend.del=pend.del.filter(x=>x!=id)}});
+ Object.keys(synced).forEach(id=>{if(!ids.has(id)){delete synced[id];delete pend.up[id];if(!pend.del.includes(id))pend.del.push(id)}});
+ const m=JSON.stringify({cfg:db.cfg,next:db.next});if(m!==metaSynced){metaSynced=m;pend.meta=m}
+ persist();paint();
 }
-function setSync(t){window.sync=t;var e=document.getElementById('st');if(e)e.textContent='Status: '+t;var h=document.querySelector('header.lg div');if(h&&view=='tab')h.textContent=h.textContent.replace(/·[^·]*$/,'· '+t)}
-let pend=false;
-function check(){if(pend)return;pend=true;
- const t=setTimeout(()=>{pend=false;setSync(navigator.onLine?'☁ sem resposta do servidor':'☁ sem internet')},10000);
- setDoc(doc(fs,'meta','ping'),{t:Date.now()}).then(()=>{clearTimeout(t);pend=false;setSync('☁ sincronizado')}).catch(e=>{clearTimeout(t);pend=false;setSync('☁ erro: '+(e.code||''))})}
-window.sync='☁ conectando…';check();setInterval(check,120000);
-addEventListener('online',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
+function send(){
+ Object.keys(pend.up).forEach(id=>{const j=pend.up[id],k='u'+id;if(inflight[k]===j)return;inflight[k]=j;
+  setDoc(doc(fs,'orcamentos',id),JSON.parse(j)).then(()=>{if(pend.up[id]===j){delete pend.up[id];persist()}if(inflight[k]===j)delete inflight[k];paint()}).catch(e=>{delete inflight[k];err(e)})});
+ pend.del.slice().forEach(id=>{const k='d'+id;if(inflight[k])return;inflight[k]=1;
+  deleteDoc(doc(fs,'orcamentos',id)).then(()=>{pend.del=pend.del.filter(x=>x!=id);persist();delete inflight[k];paint()}).catch(e=>{delete inflight[k];err(e)})});
+ if(pend.meta){const m=pend.meta;if(inflight.m!==m){inflight.m=m;
+  setDoc(doc(fs,'meta','config'),JSON.parse(m)).then(()=>{if(pend.meta===m){pend.meta=null;persist()}if(inflight.m===m)delete inflight.m;paint()}).catch(e=>{delete inflight.m;err(e)})}}
+}
+window.cloudSave=()=>{mirror();diff();clearTimeout(timer);timer=setTimeout(send,500)};
+function check(){
+ if(!navigator.onLine){setSync('☁ sem internet – salvo no aparelho');return}
+ send();if(pinging)return;pinging=true;
+ const t=setTimeout(()=>{pinging=false;setSync(navigator.onLine?'☁ sem resposta do servidor – salvo no aparelho':'☁ sem internet – salvo no aparelho')},10000);
+ setDoc(doc(fs,'meta','ping'),{t:Date.now()}).then(()=>{clearTimeout(t);pinging=false;setSync('☁ sincronizado')}).catch(e=>{clearTimeout(t);pinging=false;err(e)});
+}
+addEventListener('online',check);addEventListener('offline',check);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
+setInterval(check,120000);
 window.fbTest=()=>new Promise(res=>{
  const t=setTimeout(()=>res('✗ Sem confirmação do servidor em 10s. O app não está alcançando o Firestore.'),10000);
  setDoc(doc(fs,'meta','ping'),{t:Date.now()}).then(()=>{clearTimeout(t);res('✓ Servidor respondeu. A conexão está funcionando.')}).catch(e=>{clearTimeout(t);res('✗ Erro: '+(e.code||'')+' '+(e.message||''))});
 });
-window.cloudSave=()=>{clearTimeout(timer);timer=setTimeout(flush,500)};
 const show=()=>{first=false;window.ready=true;render()};
 setTimeout(()=>{if(first)show()},4000);
-onSnapshot(doc(fs,'meta','config'),s=>{const m=s.data();if(m){db.cfg=m.cfg||db.cfg;db.next=Math.max(db.next,m.next||1);metaSynced=JSON.stringify({cfg:db.cfg,next:m.next})}},err);
+onSnapshot(doc(fs,'meta','config'),s=>{const m=s.data();if(m&&!pend.meta){db.cfg=m.cfg||db.cfg;db.next=Math.max(db.next,m.next||1);metaSynced=JSON.stringify({cfg:db.cfg,next:db.next});mirror()}},err);
 onSnapshot(collection(fs,'orcamentos'),s=>{
- const items=[];synced={};s.forEach(d=>{const x=d.data();items.push(x);synced[d.id]=JSON.stringify(x)});
- db.items=items;db.next=Math.max(db.next,...items.map(o=>(o.num||0)+1),1);
- if(!navigator.onLine)setSync('☁ sem internet');
- if(first||(view=='tab'&&tab!='cfg'))show();
-},{includeMetadataChanges:true},err);
+ let items=[];synced={};
+ s.forEach(d=>{const x=d.data();items.push(x);synced[d.id]=JSON.stringify(x)});
+ Object.keys(pend.up).forEach(id=>{items=items.filter(x=>String(x.id)!==id);items.push(JSON.parse(pend.up[id]));synced[id]=pend.up[id]});
+ pend.del.forEach(id=>{items=items.filter(x=>String(x.id)!==id);delete synced[id]});
+ db.items=items;db.next=Math.max(db.next,...items.map(o=>(o.num||0)+1),1);mirror();
+ if(first||(view=='tab'&&tab!='cfg')){first=false;window.ready=true;render()}
+},err);
+send();check();
 </script>
 </body>
 </html>
