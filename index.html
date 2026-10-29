@@ -172,7 +172,7 @@ render();
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,setDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app=initializeApp({apiKey:"AIzaSyDSzOL_vV6XUtN0xjYbEQXRcz1Ox0SrDso",authDomain:"orcamentos-e1102.firebaseapp.com",projectId:"orcamentos-e1102",storageBucket:"orcamentos-e1102.firebasestorage.app",messagingSenderId:"677039016434",appId:"1:677039016434:web:707a19d5c6d5d8872fc36b"});
-const fs=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+const fs=initializeFirestore(app,{experimentalForceLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
 let synced={},metaSynced='',timer=null,first=true;
 const err=e=>{var c=e&&e.code;window.sync=c=='permission-denied'?'sem permissão: publique as regras':c=='unavailable'?'sem conexão com o Firebase':'erro: '+(c||'desconhecido');if(view=='tab'&&tab!='cfg')render()};
 function flush(){
@@ -185,6 +185,7 @@ function flush(){
 window.cloudSave=()=>{clearTimeout(timer);timer=setTimeout(flush,500)};
 const show=()=>{first=false;window.ready=true;render()};
 setTimeout(()=>{if(first)show()},4000);
+setTimeout(()=>{if(String(window.sync).indexOf('conectando')>-1){window.sync='☁ sem resposta do servidor (rede bloqueando?)';if(view=='tab'&&tab!='cfg')render()}},12000);
 onSnapshot(doc(fs,'meta','config'),s=>{const m=s.data();if(m){db.cfg=m.cfg||db.cfg;db.next=Math.max(db.next,m.next||1);metaSynced=JSON.stringify({cfg:db.cfg,next:m.next})}},err);
 onSnapshot(collection(fs,'orcamentos'),s=>{
  const items=[];synced={};s.forEach(d=>{const x=d.data();items.push(x);synced[d.id]=JSON.stringify(x)});
