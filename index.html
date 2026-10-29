@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AVS – Orçamentos</title>
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--bg:#f2f4f8;--fg:#18202e;--card:#fff;--bd:#dde3ec;--pri:#1f3a5f;--on:#fff;--acc:#2f6fd0;--mut:#6b778a;--ok:#1a8a52;--warn:#c27a00;--bad:#c2372b;--in:#f7f9fc;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e131b;--fg:#e9edf4;--card:#171e29;--bd:#273142;--pri:#7aa7e6;--on:#0e131b;--acc:#6ea0e8;--mut:#98a4b6;--ok:#4cc38a;--warn:#f0b24a;--bad:#ff8a80;--in:#0f151e}}
+:root[data-theme="dark"]{--bg:#0e131b;--fg:#e9edf4;--card:#171e29;--bd:#273142;--pri:#7aa7e6;--on:#0e131b;--acc:#6ea0e8;--mut:#98a4b6;--ok:#4cc38a;--warn:#f0b24a;--bad:#ff8a80;--in:#0f151e}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:90px}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px 14px}
+header{background:var(--pri);color:var(--on);padding:16px 14px 18px;margin:0 -14px 14px;border-radius:0 0 20px 20px}
+header b{font-size:18px}header div{font-size:12px;opacity:.8}
+h2{font-size:15px;margin:18px 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
+.kpi span{font-size:12px;color:var(--mut)}.kpi b{display:block;font-size:19px;margin-top:2px}.kpi small{color:var(--mut);font-size:11px}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:10px;padding:10px 14px}
+button.p{background:var(--pri);color:var(--on);border-color:var(--pri);font-weight:600}
+button.d{color:var(--bad)}button.s{padding:7px 11px;font-size:13px}
+input,select,textarea{font:inherit;font-size:16px;width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--in);color:var(--fg)}
+label{display:block;font-size:12px;color:var(--mut);margin:10px 0 4px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.tag{font-size:11px;padding:2px 9px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.Pendente{color:var(--warn)}.Aprovado{color:var(--ok)}.Concluído{color:var(--acc)}.Recusado{color:var(--bad)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin:10px 0}.chips button{white-space:nowrap;padding:6px 12px;border-radius:99px;font-size:13px}.chips .on{background:var(--pri);color:var(--on);border-color:var(--pri)}
+.it{border:1px solid var(--bd);border-radius:12px;padding:10px;margin-bottom:8px}
+.g3{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:end}
+.tot{font-size:20px;font-weight:700;text-align:right;margin:12px 0}
+.m{color:var(--mut);font-size:13px}
+.leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin-top:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.hb{margin:8px 0}.hb div{display:flex;justify-content:space-between;font-size:13px}.hb u{display:block;height:8px;border-radius:4px;background:var(--acc);margin-top:3px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:space-around;align-items:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;font-size:11px;color:var(--mut);padding:4px 14px;gap:2px}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--pri)}
+nav .fab{background:var(--pri);color:var(--on);width:52px;height:52px;border-radius:50%;margin-top:-26px;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.25);padding:0}
+#doc{background:#fff;color:#111;padding:22px 16px;border:1px solid var(--bd);border-radius:8px;font-size:13px}
+#doc h1{color:#1f3a5f;text-align:center;font-size:19px;margin:0;border-bottom:2px solid #1f3a5f;padding-bottom:8px}
+#doc h3{text-align:center;color:#1f3a5f;font-size:16px;margin:12px 0 2px}
+#doc table{width:100%;border-collapse:collapse;margin:10px 0}
+#doc td,#doc th{border:1px solid #bbb;padding:7px;text-align:left;vertical-align:top}
+#doc th{background:#1f3a5f;color:#fff}#doc .r{text-align:right;white-space:nowrap}#doc .k{background:#eef2f7;font-weight:700;width:90px}
+#doc .sig{display:flex;gap:24px;margin-top:60px;text-align:center}#doc .sig div{flex:1;border-top:1px solid #333;padding-top:4px;font-size:12px}
+@media print{body{background:#fff;padding:0}.noprint,nav,header{display:none!important}.wrap{padding:0;max-width:none}#doc{border:0;padding:0}}
+header.lg{background:#000;text-align:center;padding:10px 14px 14px}header.lg img{height:84px;max-width:100%;object-fit:contain;display:block;margin:0 auto}header.lg b{display:block;font-size:15px;margin-top:4px;color:#fff}header.lg div{color:#fff}
+#doc .lgb{background:#000;text-align:center;padding:8px;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact}#doc .lgb img{height:105px;max-width:100%;object-fit:contain}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<nav id="nav" class="noprint"></nav>
+<script>
+var KEY='avs_orcamentos_v1',db,cur=null,tab='dash',view='tab',q='',fs='Todos',cid=null,msg='';
+var ST=['Pendente','Aprovado','Concluído','Recusado'],SC={Pendente:'#c27a00',Aprovado:'#1a8a52','Concluído':'#2f6fd0',Recusado:'#c2372b'};
+var MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var today=function(){return new Date().toISOString().slice(0,10)};
+var brl=function(n){return(Number(n)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})};
+var k=function(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1).replace('.',',')+'k':String(Math.round(n))};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+var fdate=function(d){var p=(d||'').split('-');return p.length==3?p[2]+'/'+p[1]+'/'+p[0]:''};
+var total=function(o){return o.items.reduce(function(s,i){return s+(Number(i.q)||0)*(Number(i.p)||0)},0)};
+var pad=function(n){return String(n).padStart(3,'0')};
+var byId=function(id){return db.items.filter(function(x){return x.id==id})[0]};
+var clone=function(o){return JSON.parse(JSON.stringify(o))};
+function seed(){return{next:2,cfg:{name:'AVS Instalação e Manutenção',phone:''},items:[{id:1,num:1,date:today(),client:'Condomínio Residencial Portinari',addr:'Rua dos Mosaicos, nº 132',cnpj:'66.985.892/0001-73',items:[{d:'Serviço em caixas de passagem elétrica e de dados: limpeza, furação e dreno, com colocação de pedra brita II em todas as caixas.',q:1,p:2400}],entry:50,notes:'',status:'Pendente'}]}}
+function load(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);if(d&&d.items){d.cfg=d.cfg||{name:'AVS Instalação e Manutenção',phone:''};return d}}}catch(e){}return seed()}
+function save(){if(window.cloudSave)cloudSave()}
+var sync='☁ Firebase',user=null,ready=false,loginErr='';
+db={next:1,cfg:{name:'AVS Instalação e Manutenção',phone:''},items:[]};
+function T(t){tab=t;view='tab';cid=null;render();scrollTo(0,0)}
+function V(v,o){view=v;cur=o||null;cid=null;render();scrollTo(0,0)}
+function blank(){return{id:Date.now(),num:db.next,date:today(),client:'',addr:'',cnpj:'',items:[{d:'',q:1,p:0}],entry:50,notes:'',status:'Pendente',isNew:true}}
+var IC={dash:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',cfg:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9L7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/>',add:'<path d="M12 5v14M5 12h14"/>'};
+function ic(n){return'<svg viewBox="0 0 24 24">'+IC[n]+'</svg>'}
+function render(){
+ var a=document.getElementById('app'),n=document.getElementById('nav'),h='';
+ if(!ready){a.innerHTML='<p class="m" style="padding:40px;text-align:center">Carregando…</p>';n.style.display='none';return}
+ if(view=='tab'){
+  var t={dash:['Painel','Visão geral dos orçamentos'],list:['Orçamentos','Gerencie suas propostas'],cfg:['Ajustes','Empresa e backup']}[tab];
+  h='<header class="lg"><img src="logo.png" alt="AVS Instalação e Manutenção"><b>'+t[0]+'</b><div>'+t[1]+' · '+sync+'</div></header>'+(tab=='dash'?vDash():tab=='list'?vList():vCfg());
+  n.style.display='flex';
+  n.innerHTML=[['dash','Painel'],['list','Orçamentos']].map(function(x){return'<button class="'+(tab==x[0]?'on':'')+'" onclick="T(\''+x[0]+'\')">'+ic(x[0])+x[1]+'</button>'}).join('')+
+   '<button class="fab" onclick="V(\'edit\',blank())" aria-label="Novo">'+ic('add')+'</button><button class="'+(tab=='cfg'?'on':'')+'" onclick="T(\'cfg\')">'+ic('cfg')+'Ajustes</button>';
+ }else{n.style.display='none';h=view=='edit'?vEdit():vDoc()}
+ a.innerHTML=h}
+
+function vDash(){
+ var L=db.items,S=function(s){return L.filter(function(o){return o.status==s})},sum=function(a){return a.reduce(function(x,o){return x+total(o)},0)};
+ var ap=S('Aprovado'),co=S('Concluído'),pe=S('Pendente'),re=S('Recusado');
+ var tx=L.length?Math.round((ap.length+co.length)/L.length*100):0;
+ var tk=L.length?sum(L)/L.length:0;
+ var h='<div class="kpis"><div class="kpi"><span>Total orçado</span><b>'+brl(sum(L))+'</b><small>'+L.length+' orçamentos</small></div>'+
+ '<div class="kpi"><span>Aprovado + concluído</span><b>'+brl(sum(ap)+sum(co))+'</b><small>'+(ap.length+co.length)+' fechados</small></div>'+
+ '<div class="kpi"><span>Em aberto (pendentes)</span><b>'+brl(sum(pe))+'</b><small>'+pe.length+' aguardando</small></div>'+
+ '<div class="kpi"><span>Taxa de aprovação</span><b>'+tx+'%</b><small>ticket médio '+brl(tk)+'</small></div></div>';
+ // barras: últimos 6 meses
+ var now=new Date(),ms=[];for(var i=5;i>=0;i--){var d=new Date(now.getFullYear(),now.getMonth()-i,1);ms.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),l:MES[d.getMonth()],v:0})}
+ L.forEach(function(o){var m=ms.filter(function(x){return x.key==(o.date||'').slice(0,7)})[0];if(m)m.v+=total(o)});
+ var mx=Math.max.apply(null,ms.map(function(x){return x.v}).concat([1])),bw=44,svg='<svg viewBox="0 0 300 150" width="100%" role="img" aria-label="Orçado por mês">';
+ ms.forEach(function(m,i){var hh=m.v/mx*100,x=i*50+4;svg+='<rect x="'+x+'" y="'+(115-hh)+'" width="'+bw+'" height="'+Math.max(hh,1)+'" rx="5" fill="var(--acc)"/><text x="'+(x+bw/2)+'" y="'+(108-hh)+'" text-anchor="middle" font-size="10" fill="var(--fg)">'+(m.v?k(m.v):'')+'</text><text x="'+(x+bw/2)+'" y="135" text-anchor="middle" font-size="11" fill="var(--mut)">'+m.l+'</text>'});
+ h+='<h2>Orçado por mês</h2><div class="card">'+svg+'</svg></div>';
+ // rosca por situação
+ var tt=L.length||1,off=0,r=42,C=2*Math.PI*r,dn='<svg viewBox="0 0 120 120" width="140" height="140" role="img" aria-label="Situação"><g transform="rotate(-90 60 60)"><circle cx="60" cy="60" r="'+r+'" fill="none" stroke="var(--bd)" stroke-width="18"/>';
+ ST.forEach(function(s){var c=S(s).length;if(c){var len=c/tt*C;dn+='<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+SC[s]+'" stroke-width="18" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'"/>';off+=len}});
+ dn+='</g><text x="60" y="58" text-anchor="middle" font-size="20" font-weight="700" fill="var(--fg)">'+L.length+'</text><text x="60" y="73" text-anchor="middle" font-size="9" fill="var(--mut)">orçamentos</text></svg>';
+ h+='<h2>Situação</h2><div class="card row" style="align-items:center"><div>'+dn+'</div><div class="leg" style="flex-direction:column;gap:8px">'+ST.map(function(s){return'<span><i style="background:'+SC[s]+'"></i>'+s+': <b>'+S(s).length+'</b> · '+brl(sum(S(s)))+'</span>'}).join('')+'</div></div>';
+ // top clientes
+ var cl={};L.forEach(function(o){var c=o.client||'Sem cliente';cl[c]=(cl[c]||0)+total(o)});
+ var top=Object.keys(cl).map(function(c){return[c,cl[c]]}).sort(function(a,b){return b[1]-a[1]}).slice(0,5),tm=top.length?top[0][1]||1:1;
+ h+='<h2>Maiores clientes</h2><div class="card">'+(top.length?top.map(function(x){return'<div class="hb"><div><span>'+esc(x[0])+'</span><b>'+brl(x[1])+'</b></div><u style="width:'+Math.max(x[1]/tm*100,2)+'%"></u></div>'}).join(''):'<span class="m">Sem dados.</span>')+'</div>';
+ return h}
+
+function filt(){return db.items.filter(function(o){var t=(o.client+' '+pad(o.num)+' '+o.addr).toLowerCase();return(!q||t.indexOf(q.toLowerCase())>-1)&&(fs=='Todos'||o.status==fs)}).sort(function(a,b){return b.num-a.num})}
+function vList(){
+ return'<input placeholder="Buscar cliente ou nº…" value="'+esc(q)+'" oninput="q=this.value;lst()"><div class="chips">'+['Todos'].concat(ST).map(function(s){return'<button class="'+(s==fs?'on':'')+'" onclick="fs=\''+s+'\';render()">'+s+'</button>'}).join('')+'</div><div id="lst">'+cards()+'</div>'}
+function lst(){document.getElementById('lst').innerHTML=cards()}
+function cards(){var L=filt();if(!L.length)return'<p class="m">Nenhum orçamento encontrado.</p>';
+ return L.map(function(o){return'<div class="card"><div class="row"><div><b>Nº '+pad(o.num)+' · '+esc(o.client||'Sem cliente')+'</b><div class="m">'+fdate(o.date)+'</div></div><div style="text-align:right"><b>'+brl(total(o))+'</b><br><span class="tag '+o.status+'">'+o.status+'</span></div></div>'+
+ '<div class="acts"><button class="s p" onclick="V(\'doc\',byId('+o.id+'))">Ver / PDF</button><button class="s" onclick="V(\'edit\',clone(byId('+o.id+')))">Editar</button><button class="s" onclick="dup('+o.id+')">Duplicar</button><button class="s d" onclick="del('+o.id+')">'+(cid==o.id?'Confirmar?':'Excluir')+'</button></div></div>'}).join('')}
+function dup(id){var o=clone(byId(id));o.id=Date.now();o.num=db.next++;o.date=today();o.status='Pendente';db.items.push(o);save();render()}
+function del(id){if(cid!=id){cid=id;lst();return}db.items=db.items.filter(function(x){return x.id!=id});cid=null;save();render()}
+
+function vEdit(){var o=cur;
+ setTimeout(pay,0);
+ return'<header><b>'+(o.isNew?'Novo':'Editar')+' orçamento nº '+pad(o.num)+'</b><div><a onclick="T(\'list\')" style="text-decoration:underline">← Cancelar</a></div></header>'+
+ '<div class="card"><label style="margin-top:0">Cliente</label><input value="'+esc(o.client)+'" oninput="cur.client=this.value"><label>CNPJ / CPF</label><input value="'+esc(o.cnpj)+'" oninput="cur.cnpj=this.value"><label>Endereço</label><input value="'+esc(o.addr)+'" oninput="cur.addr=this.value">'+
+ '<div class="g2"><div><label>Data</label><input type="date" value="'+esc(o.date)+'" oninput="cur.date=this.value"></div><div><label>Situação</label><select onchange="cur.status=this.value">'+ST.map(function(s){return'<option'+(s==o.status?' selected':'')+'>'+s+'</option>'}).join('')+'</select></div></div></div>'+
+ '<h2>Serviços</h2><div id="its">'+itemsH()+'</div><button onclick="cur.items.push({d:\'\',q:1,p:0});refItems()">+ Adicionar item</button><div class="tot">Total: <span id="tt">'+brl(total(o))+'</span></div>'+
+ '<div class="card"><label style="margin-top:0">Entrada (%) para compra de material</label><input type="number" inputmode="decimal" min="0" max="100" value="'+o.entry+'" oninput="cur.entry=this.value;pay()"><div class="m" id="pp"></div><label>Observações</label><textarea rows="3" oninput="cur.notes=this.value">'+esc(o.notes)+'</textarea></div>'+
+ '<div class="acts"><button class="p" onclick="saveCur(0)">Salvar</button><button onclick="saveCur(1)">Salvar e ver PDF</button></div>'}
+function itemsH(){return cur.items.map(function(i,n){return'<div class="it"><label style="margin-top:0">Descrição</label><textarea rows="2" oninput="cur.items['+n+'].d=this.value">'+esc(i.d)+'</textarea><div class="g3"><div><label>Qtd</label><input type="number" inputmode="decimal" value="'+i.q+'" oninput="cur.items['+n+'].q=this.value;tt()"></div><div><label>Unitário (R$)</label><input type="number" inputmode="decimal" step="0.01" value="'+i.p+'" oninput="cur.items['+n+'].p=this.value;tt()"></div><button class="s d" onclick="cur.items.splice('+n+',1);if(!cur.items.length)cur.items.push({d:\'\',q:1,p:0});refItems()">✕</button></div></div>'}).join('')}
+function refItems(){document.getElementById('its').innerHTML=itemsH();tt()}
+function tt(){document.getElementById('tt').textContent=brl(total(cur));pay()}
+function pay(){var e=document.getElementById('pp');if(!e)return;var t=total(cur),en=t*(Number(cur.entry)||0)/100;e.textContent='Entrada: '+brl(en)+' · Restante: '+brl(t-en)}
+function saveCur(d){if(!cur.client.trim()){alert('Informe o nome do cliente.');return}
+ var o=cur,nw=o.isNew;delete o.isNew;if(nw){db.items.push(o);db.next=Math.max(db.next,o.num+1)}else db.items=db.items.map(function(x){return x.id==o.id?o:x});
+ save();if(d)V('doc',o);else T('list')}
+
+function vDoc(){var o=cur,t=total(o),en=t*(Number(o.entry)||0)/100,c=db.cfg;
+ var rows=o.items.map(function(i){var s=(Number(i.q)||0)*(Number(i.p)||0);return'<tr><td>'+esc(i.d).replace(/\n/g,'<br>')+'</td><td class="r">'+(+i.q)+'</td><td class="r">'+brl(i.p)+'</td><td class="r">'+brl(s)+'</td></tr>'}).join('');
+ return'<div class="noprint" style="padding:14px 0"><div class="acts" style="margin:0"><button onclick="T(\'list\')">← Voltar</button><button onclick="V(\'edit\',clone(cur))">Editar</button><button class="p" onclick="pr()">Imprimir / PDF</button></div><p class="m" id="pm">Na impressão, escolha “Salvar como PDF”.</p></div>'+
+ '<div id="doc"><div class="lgb"><img src="logo.png" alt="'+esc(c.name)+'"></div>'+(c.phone?'<div style="text-align:center;color:#555;margin-top:4px">'+esc(c.phone)+'</div>':'')+'<h3>ORÇAMENTO Nº '+pad(o.num)+'</h3><div style="text-align:center;color:#555">'+fdate(o.date)+'</div>'+
+ '<table><tr><td class="k">Cliente</td><td>'+esc(o.client)+'</td></tr><tr><td class="k">Endereço</td><td>'+esc(o.addr)+'</td></tr><tr><td class="k">CNPJ/CPF</td><td>'+esc(o.cnpj)+'</td></tr></table>'+
+ '<table><tr><th>Serviço</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Valor</th></tr>'+rows+'<tr><td colspan="3"><b>VALOR TOTAL</b></td><td class="r"><b>'+brl(t)+'</b></td></tr></table>'+
+ '<b style="color:#1f3a5f">Condições de pagamento</b><table><tr><td>Entrada ('+(Number(o.entry)||0)+'%) – compra de material</td><td class="r">'+brl(en)+'</td></tr><tr><td>Restante – no término do serviço</td><td class="r">'+brl(t-en)+'</td></tr></table>'+
+ (o.notes?'<p><b>Observações:</b><br>'+esc(o.notes).replace(/\n/g,'<br>')+'</p>':'')+'<div class="sig"><div>'+esc(c.name)+'</div><div>'+esc(o.client)+'</div></div></div>'}
+function pr(){try{window.print()}catch(e){document.getElementById('pm').textContent='Abra a página em uma aba normal do navegador e use Ctrl+P.'}}
+
+function vCfg(){return'<div class="card"><b>Dados da empresa</b><label>Nome (aparece no PDF)</label><input value="'+esc(db.cfg.name)+'" oninput="db.cfg.name=this.value;save()"><label>Telefone / WhatsApp</label><input value="'+esc(db.cfg.phone)+'" oninput="db.cfg.phone=this.value;save()"></div>'+
+ '<div class="card"><b>Backup</b><p class="m">Os dados ficam na nuvem (Firebase). Para importar orçamentos de outro lugar, cole o texto do backup e clique em Restaurar.</p><textarea id="bk" rows="6">'+esc(JSON.stringify(db))+'</textarea><div class="acts"><button onclick="var e=document.getElementById(\'bk\');e.select();try{document.execCommand(\'copy\')}catch(x){}">Copiar</button><button class="p" onclick="restore()">Restaurar</button></div><p class="m" id="bm"></p></div>'}
+function restore(){try{var d=JSON.parse(document.getElementById('bk').value);if(!d||!Array.isArray(d.items))throw 0;d.cfg=d.cfg||db.cfg;d.next=d.next||d.items.reduce(function(m,o){return Math.max(m,o.num)},0)+1;db=d;save();document.getElementById('bm').textContent='Backup restaurado.'}catch(e){document.getElementById('bm').textContent='Texto de backup inválido.'}}
+render();
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,setDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyDSzOL_vV6XUtN0xjYbEQXRcz1Ox0SrDso",authDomain:"orcamentos-e1102.firebaseapp.com",projectId:"orcamentos-e1102",storageBucket:"orcamentos-e1102.firebasestorage.app",messagingSenderId:"677039016434",appId:"1:677039016434:web:707a19d5c6d5d8872fc36b"});
+const fs=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+let synced={},metaSynced='',timer=null,first=true;
+const err=()=>{window.sync='erro ao sincronizar'};
+function flush(){
+ const ids=new Set();
+ db.items.forEach(o=>{const id=String(o.id);ids.add(id);const j=JSON.stringify(o);if(synced[id]!==j){synced[id]=j;setDoc(doc(fs,'orcamentos',id),JSON.parse(j)).catch(err)}});
+ Object.keys(synced).forEach(id=>{if(!ids.has(id)){delete synced[id];deleteDoc(doc(fs,'orcamentos',id)).catch(err)}});
+ const m=JSON.stringify({cfg:db.cfg,next:db.next});
+ if(m!==metaSynced){metaSynced=m;setDoc(doc(fs,'meta','config'),JSON.parse(m)).catch(err)}
+}
+window.cloudSave=()=>{clearTimeout(timer);timer=setTimeout(flush,500)};
+const show=()=>{first=false;window.ready=true;render()};
+setTimeout(()=>{if(first)show()},4000);
+onSnapshot(doc(fs,'meta','config'),s=>{const m=s.data();if(m){db.cfg=m.cfg||db.cfg;db.next=Math.max(db.next,m.next||1);metaSynced=JSON.stringify({cfg:db.cfg,next:m.next})}},err);
+onSnapshot(collection(fs,'orcamentos'),s=>{
+ const items=[];synced={};s.forEach(d=>{const x=d.data();items.push(x);synced[d.id]=JSON.stringify(x)});
+ db.items=items;db.next=Math.max(db.next,...items.map(o=>(o.num||0)+1),1);
+ window.sync=s.metadata.fromCache?'☁ offline':'☁ sincronizado';
+ if(first||(view=='tab'&&tab!='cfg'))show();
+},err);
+</script>
+</body>
+</html>
