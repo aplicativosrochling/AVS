@@ -165,16 +165,16 @@ function pr(){try{window.print()}catch(e){document.getElementById('pm').textCont
 function saveCfg(){save();var e=document.getElementById('cm');if(e){e.textContent='✓ Dados salvos';setTimeout(function(){var x=document.getElementById('cm');if(x)x.textContent=''},2500)}}
 function testConn(){var e=document.getElementById('tc');e.textContent='Testando…';fbTest().then(function(r){e.textContent=r})}
 function vCfg(){return'<div class="card"><b>Dados da empresa</b><label>Nome (aparece no PDF)</label><input value="'+esc(db.cfg.name)+'" oninput="db.cfg.name=this.value"><label>Telefone / WhatsApp</label><input value="'+esc(db.cfg.phone)+'" oninput="db.cfg.phone=this.value"><div class="acts"><button class="p" onclick="saveCfg()">Salvar dados</button></div><p class="m" id="cm" style="color:var(--ok)"></p></div>'+
- '<div class="card"><b>Conexão com o Firebase</b><p class="m">Status: '+esc(sync)+'</p><button onclick="testConn()">Testar conexão</button><p class="m" id="tc"></p></div>'+
+ '<div class="card"><b>Conexão com o Firebase</b><p class="m" id="st">Status: '+esc(sync)+'</p><button onclick="testConn()">Testar conexão</button><p class="m" id="tc"></p></div>'+
  '<div class="card"><b>Backup</b><p class="m">Os dados ficam na nuvem (Firebase). Para importar orçamentos de outro lugar, cole o texto do backup e clique em Restaurar.</p><textarea id="bk" rows="6">'+esc(JSON.stringify(db))+'</textarea><div class="acts"><button onclick="var e=document.getElementById(\'bk\');e.select();try{document.execCommand(\'copy\')}catch(x){}">Copiar</button><button class="p" onclick="restore()">Restaurar</button></div><p class="m" id="bm"></p></div>'}
 function restore(){try{var d=JSON.parse(document.getElementById('bk').value);if(!d||!Array.isArray(d.items))throw 0;d.cfg=d.cfg||db.cfg;d.next=d.next||d.items.reduce(function(m,o){return Math.max(m,o.num)},0)+1;db=d;save();document.getElementById('bm').textContent='Backup restaurado.'}catch(e){document.getElementById('bm').textContent='Texto de backup inválido.'}}
 render();
 </script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,setDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {initializeFirestore,memoryLocalCache,collection,doc,setDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app=initializeApp({apiKey:"AIzaSyDSzOL_vV6XUtN0xjYbEQXRcz1Ox0SrDso",authDomain:"orcamentos-e1102.firebaseapp.com",projectId:"orcamentos-e1102",storageBucket:"orcamentos-e1102.firebasestorage.app",messagingSenderId:"677039016434",appId:"1:677039016434:web:707a19d5c6d5d8872fc36b"});
-const fs=initializeFirestore(app,{experimentalForceLongPolling:true,localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+const fs=initializeFirestore(app,{experimentalForceLongPolling:true,localCache:memoryLocalCache()});
 let synced={},metaSynced='',timer=null,first=true;
 const err=e=>{var c=e&&e.code;window.sync=c=='permission-denied'?'sem permissão: publique as regras':c=='unavailable'?'sem conexão com o Firebase':'erro: '+(c||'desconhecido');if(view=='tab'&&tab!='cfg')render()};
 function flush(){
@@ -184,6 +184,13 @@ function flush(){
  const m=JSON.stringify({cfg:db.cfg,next:db.next});
  if(m!==metaSynced){metaSynced=m;setDoc(doc(fs,'meta','config'),JSON.parse(m)).catch(err)}
 }
+function setSync(t){window.sync=t;var e=document.getElementById('st');if(e)e.textContent='Status: '+t;var h=document.querySelector('header.lg div');if(h&&view=='tab')h.textContent=h.textContent.replace(/·[^·]*$/,'· '+t)}
+let pend=false;
+function check(){if(pend)return;pend=true;
+ const t=setTimeout(()=>{pend=false;setSync(navigator.onLine?'☁ sem resposta do servidor':'☁ sem internet')},10000);
+ setDoc(doc(fs,'meta','ping'),{t:Date.now()}).then(()=>{clearTimeout(t);pend=false;setSync('☁ sincronizado')}).catch(e=>{clearTimeout(t);pend=false;setSync('☁ erro: '+(e.code||''))})}
+window.sync='☁ conectando…';check();setInterval(check,120000);
+addEventListener('online',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});
 window.fbTest=()=>new Promise(res=>{
  const t=setTimeout(()=>res('✗ Sem confirmação do servidor em 10s. O app não está alcançando o Firestore.'),10000);
  setDoc(doc(fs,'meta','ping'),{t:Date.now()}).then(()=>{clearTimeout(t);res('✓ Servidor respondeu. A conexão está funcionando.')}).catch(e=>{clearTimeout(t);res('✗ Erro: '+(e.code||'')+' '+(e.message||''))});
@@ -191,12 +198,11 @@ window.fbTest=()=>new Promise(res=>{
 window.cloudSave=()=>{clearTimeout(timer);timer=setTimeout(flush,500)};
 const show=()=>{first=false;window.ready=true;render()};
 setTimeout(()=>{if(first)show()},4000);
-setTimeout(()=>{if(String(window.sync).indexOf('conectando')>-1){window.sync='☁ sem resposta do servidor (rede bloqueando?)';if(view=='tab'&&tab!='cfg')render()}},12000);
 onSnapshot(doc(fs,'meta','config'),s=>{const m=s.data();if(m){db.cfg=m.cfg||db.cfg;db.next=Math.max(db.next,m.next||1);metaSynced=JSON.stringify({cfg:db.cfg,next:m.next})}},err);
 onSnapshot(collection(fs,'orcamentos'),s=>{
  const items=[];synced={};s.forEach(d=>{const x=d.data();items.push(x);synced[d.id]=JSON.stringify(x)});
  db.items=items;db.next=Math.max(db.next,...items.map(o=>(o.num||0)+1),1);
- window.sync=s.metadata.fromCache?(navigator.onLine?'☁ conectando…':'☁ sem internet'):'☁ sincronizado';
+ if(!navigator.onLine)setSync('☁ sem internet');
  if(first||(view=='tab'&&tab!='cfg'))show();
 },{includeMetadataChanges:true},err);
 </script>
